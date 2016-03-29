@@ -1,20 +1,45 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 <%@ taglib prefix="s" uri="/struts-tags" %>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Insert title here</title>
-<link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Insert title here</title>
+	
+	<!-- Bootstrap Core CSS -->
+	<link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
+    <!-- Custom CSS -->
+    <link href="css/modern-business.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    
+    <!-- style -->
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
 </head>
 <body>
-	<div>
-		<div><span>吴万垠医生肺癌专家系统</span></div>
-		<div></div>
-	</div>
+	<!-- Navigation -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <a class="navbar-brand" href="welcome.jsp">吴万垠教授肺癌中医专家系统</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                       <a href="logout">logout</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
 	<div class="container">
-		<div id="left">
+		<div class="col-xs-6" align="left">
 			<form id="myForm" name="myForm" method="post">
 				<div id="left_left">
 					<!-- 症型 -->
@@ -336,23 +361,35 @@
 				</div>
 			</form>
 		</div>
-	</div>
-	<div id="right">
-		<div id="result">
+		
+		<!--  rigth panel -->
+		<div class="col-xs-6">
+		<div>
+			<h3>预测结果</h3>
+		</div>
+		<div id="result" align="left" >
+			<!-- <div id="statistics"></div>
+			<hr>
+			<div id="machinelearning"></div>
+			<hr>
+			<div id="rules"></div> -->
+			<hr>
+			<div id="compresensive"></div>
+			<hr>
 		</div>
 	
 	</div>
-	
-	
-	
+	</div>
+	<!-- <img id="loading" src="img/progress.gif" /> Loading Image -->
+	<div id="loading" style="position: fixed; top:0; left:0; width:100%; height: 100%; center center #efefef">
+		<img src="img/progress.gif" style="margin-top: 15%;margin-left: 15%;"/>
+	</div>
 	<script type="text/javascript" src="js/jquery-2.2.2.js"></script>
 	<script type="text/javascript">
-		
-		
-		
 		function btn(){
 			var $btn = $("input.btn");//获取按钮元素
 			$btn.bind("click",function(){
+				$("#loading").show();
 				var zhengxingString = "";
 				var pulseString = "";
 				var bodydiscomfortString = "";
@@ -400,9 +437,67 @@
                     },
                     dataType:"json",//设置需要返回的数据类型
                     success:function(data){
-                       	// resut 
-                        $('#result').html(data);
-                         
+                    	$("#loading").hide(); // To Hide progress bar
+                    	/* var statisticsStr = "";
+                    	var machineStr = "";
+                    	var ruleStr = "";
+                    	var compresensiveStr = "";
+                    	
+                    	// parse json text
+                    	var jsonObject = JSON.parse(data, function(key, value){
+                    		if(key == "medicineListByStatistics"){
+                    			value.foreach(function(value){
+                    				statisticsStr += value + ",";
+                    			});
+                    		}
+							if(key == "medicineListByMachine"){
+								value.foreach(function(value){
+									machineStr += value + ",";
+                    			});
+                    		}
+							if(key == "medicineListByRules"){
+								value.foreach(function(value){
+									ruleStr += value + ",";
+                    			});
+                    		}
+							if(key == "medicineList"){
+								value.foreach(function(value){
+									compresensiveStr += value + ",";
+                    			});
+                    		}
+                    	});
+                       	$('#statistics').html(statisticsStr);
+                       	$('#machinelearning').html(machineStr);
+                       	$('#rules').html(ruleStr);
+                       	$('#compresensive').html(compresensiveStr); */
+                       	var jsonObject = jQuery.parseJSON( data );
+                       /* 	var statisticsStr = "";
+                    	var machineStr = "";
+                    	var ruleStr = ""; */
+                    	var compresensiveStr = "";
+                    	// statistics result
+                    	/* $.each(jsonObject.medicineListByStatistics, function(id, value){
+                    		statisticsStr += value + ",";
+                    	});
+                       	$('#statistics').html(statisticsStr);
+                    	
+                    	// machine learning result
+                    	$.each(jsonObject.medicineListByMachine, function(id, value){
+                    		machineStr += value + ",";
+                    	});
+                       	$('#machinelearning').html(machineStr);
+                    	
+                    	// rules learning result
+                    	$.each(jsonObject.medicineListByRules, function(id, value){
+                    		ruleStr += value + ",";
+                    	});
+                       	$('#rules').html(ruleStr); */
+                    	
+                    	// compresensive result
+                    	$.each(jsonObject.medicineList, function(id, value){
+                    		compresensiveStr += value + ",";
+                    	});
+                       	$('#compresensive').html(compresensiveStr);
                     },
                     error:function(){
                         alert("系统异常，请稍后重试！");
@@ -412,7 +507,8 @@
 		}
 		
 		/* 页面加载完成，绑定事件 */
-        $(document).ready(function(){           
+        $(document).ready(function(){
+        	$('#loading').hide();
             btn();//点击提交，执行ajax
         });
 	</script>
