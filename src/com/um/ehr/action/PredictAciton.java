@@ -51,18 +51,13 @@ public class PredictAciton extends ActionSupport implements ServletRequestAware{
      * @return SUCCESS
      */
     public String excuteAjax(){
-        try {
-            //获取数据
-            
-            //将数据存储在map里，再转换成json类型数据，也可以自己手动构造json类型数据
-            
-            
+    	try {
             /**
              * 1. Parse request parameters
              */
         	// get parameters
         	String batch = request.getParameter("batch");
-            double threshold = Double.valueOf(request.getParameter("threshold"));
+//            double threshold = Double.valueOf(request.getParameter("threshold"));
             String timestatus = request.getParameter("timestatus");
             String xu = request.getParameter("xu");
             String tanyu = request.getParameter("tanyu");
@@ -76,7 +71,7 @@ public class PredictAciton extends ActionSupport implements ServletRequestAware{
             String defecate = request.getParameter("defecate");
             String constipation = request.getParameter("constipation");
             String urinate = request.getParameter("urinate");
-            String xonglei = request.getParameter("xonglei");
+            String xionglei = request.getParameter("xionglei");
             String futong = request.getParameter("futong");
             String tengtong = request.getParameter("tengtong");
             String bodydiscomfort = request.getParameter("bodydiscomfort");
@@ -89,20 +84,27 @@ public class PredictAciton extends ActionSupport implements ServletRequestAware{
             String thirst = request.getParameter("thirst");
             String taste = request.getParameter("taste");
             
-            logger.info("batch: " + batch);
+            logger.info("xionglei:-" + xionglei);
+            
         	// format diagnose and description
             String diagnose = "";
             String description = "";
             
             // diagnose
             diagnose = zhengxing + (tanyu.equals("yes") ? "痰瘀," : "") + (tanshi.equals("yes") ? "痰湿,":"") + xu;
-            
+            logger.info("diagnose: " + diagnose);
             // description
-            description = timestatus + "," +sputumamount + "," + sputumcolor + "," + cough + "," + pulse + na + "," 
-            				+ defecate + "," + constipation + "," + urinate + "," + xonglei + ","
-            				+ futong + "," + tengtong + bodydiscomfort + tonguecolor + "," 
+            description = timestatus + "," +sputumamount + "," + sputumcolor + "," + cough + "," + na + "," 
+            				+ defecate + "," + urinate + "," + xionglei + ","
+            				+ futong + "," + tonguecolor + "," 
             				+ coatedtongue + "," + energy + "," + sleep + "," + hanre + ","
             				+ sweat + "," + thirst + "," + taste;
+            description += pulse.contains(",") ? "," + pulse : "";
+            description += tengtong.contains(",") ? tengtong : "";
+            description += bodydiscomfort.contains(",") ? bodydiscomfort : "";
+            description += constipation == null ? "" : "xiexie";
+            
+            logger.info("description: " + description);
             // 1.3 formatted the description to output
     		String descconvertString = MedicineByDescription.getFormatedDescirption(description);
     		String descriptionString = diagnose + descconvertString;
@@ -113,7 +115,6 @@ public class PredictAciton extends ActionSupport implements ServletRequestAware{
             List<String> medicineListByStatis = new ArrayList<String>(); // predict medicines result
             // 2.1 statistics medicines larger than 90% records
     		int outputnumber = 15; // the number of output medicine
-    		int similarnumber = 6; // similar record number
     		
     		// 2.2 get all records with same batch
     		List<EHealthRecord> eHealthRecordsByBatch = MedicineByDescription.getRecordsByBatch(batch); // all record with same batch
@@ -126,20 +127,18 @@ public class PredictAciton extends ActionSupport implements ServletRequestAware{
     		double percent = 0.9; // the percent 
     		
     		List<String> medicineWithInevitable = DiagMedicineProcess.statisMedicineWithPercent(allMedicineMap, allRecordsNum, percent);
-    		if(medicineWithInevitable != null && medicineWithInevitable.size() > 0){
-    			medicineListByStatis.addAll(medicineWithInevitable); //the medicine with percent large than 90%
-    		}
     		
     		// 2.6 get similar records based on the description
     		List<EHealthRecord> similaryRecords = MedicineByDescription.getSimilaryEHealthRecords(eHealthRecordsByBatch, diagnose, description);
+    		logger.info("similary records: " + similaryRecords.size());
     		
     		if (similaryRecords != null && similaryRecords.size() > 0) {
     			// 2.7 statistic the medicines in the similar records
     			Set<String> cnmedicineSet = DiagMedicineProcess.getMedicinesByDescription(description, similaryRecords);
-    			for (String med : medicineListByStatis) {
-    				if (!cnmedicineSet.contains(med)) {
+    			for (String med : medicineWithInevitable) {
+    				if (cnmedicineSet.contains(med)) {
     					// remove the medicine from medicine list not in the cnmedicine set
-    					medicineListByStatis.remove(med);
+    					medicineListByStatis.add(med);
     				}
     			}
     			for (String cn : cnmedicineSet) {
@@ -169,12 +168,13 @@ public class PredictAciton extends ActionSupport implements ServletRequestAware{
     		//  3.1 initial the input parameters of machine learning
     		List<String> inputcode = MachineLearningPredict.parseDiagAndDesc(diagnose, description); // format the input parameters
     		// 	3.2 predict the medicines based on the machine learning
-    		List<String> medicineListByMachine = MachineLearningPredict.predict(inputcode, threshold); // the predict result of machine learning
+    		List<String> medicineListByMachine = MachineLearningPredict.predict(inputcode); // the predict result of machine learning
     		
             /**
              * 4. Predict medicines based on rules
              */
     		List<String> medicineListByRules = BasedOnRulePredict.predictBasedOnRules(descriptionString);
+    		
             /**
              * 5. Return result
              */
@@ -236,10 +236,6 @@ public class PredictAciton extends ActionSupport implements ServletRequestAware{
     		
             Map<String,Object> map = new HashMap<String,Object>();
             
-//            map.put("medicineListByStatistics", medicineListByStatisticSorted);
-//            map.put("medicineListByRules", medicineListByRules);
-//            map.put("medicineListByMachine", medicineListByMachine);
-            
             map.put("medicineList", medicineList);
             
             JSONObject json = JSONObject.fromObject(map);//将map对象转换成json类型数据
@@ -247,7 +243,7 @@ public class PredictAciton extends ActionSupport implements ServletRequestAware{
             
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        } 
         return SUCCESS;
     }
 	

@@ -5,8 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import newpredictum.Predictum;
+import java.util.logging.Logger;
 
 import com.mathworks.toolbox.javabuilder.MWClassID;
 import com.mathworks.toolbox.javabuilder.MWComplexity;
@@ -16,12 +15,16 @@ import com.mathworks.toolbox.javabuilder.MWNumericArray;
 import com.um.data.DiagClassifyData;
 import com.um.model.EHealthRecord;
 
+import predictmedicine.PredictMedicine;
+
 /**
  *  Machine Learning predict medicines
  * @author heermaster
  *
  */
 public class MachineLearningPredict {
+	
+	private static Logger logger = Logger.getLogger("com.um.util.MachineLearningPredict"); 
 
 	/**
 	 *  Predict the medicine based on the input code!
@@ -30,20 +33,20 @@ public class MachineLearningPredict {
 	 * @param threshold
 	 * @return
 	 */
-	public static List<String> predict(List<String> inputcode, double threshold){
+	public static List<String> predict(List<String> inputcode){
 		if( inputcode == null || inputcode.size() == 0 ){
 			return null;
 		}
 		List<String> medicineListByMachine = new ArrayList<String>();
 		// Machine learning object
-		Predictum predictum = null;
+		PredictMedicine predictum = null;
 		int predictConditionCount = inputcode.size(); // the number of machine learning input parameters
 		MWNumericArray x = null; /* Array of x values */
 		Object[] y = null;
 		
 		try {
 			// predict bean
-			predictum = new Predictum();
+			predictum = new PredictMedicine();
 			
 			int[] dims1 = { 1, predictConditionCount }; // the x input parameters of machine learning
 			x = MWNumericArray.newInstance(dims1, MWClassID.DOUBLE,MWComplexity.REAL); // x input matrix
@@ -52,8 +55,9 @@ public class MachineLearningPredict {
 				x.set(i, Integer.valueOf(inputcode.get(i-1)));
 			}
 			// machine learning predict medicines
-			y = predictum.newpredictum(1, x, threshold);
-			
+//			y = predictum.newpredictum(1, x, threshold);
+			y = predictum.predictmedicine(1, x);
+			logger.info("y size: " + y.length);
 			if(y == null) return null;
 			
 			MWLogicalArray yy = (MWLogicalArray) y[0];
@@ -77,7 +81,9 @@ public class MachineLearningPredict {
 			e.printStackTrace();
 		} finally {
 			System.gc();
-			predictum = null;
+			if (predictum != null) {
+				predictum.dispose();
+			}
 		}
 		return medicineListByMachine;
 	}

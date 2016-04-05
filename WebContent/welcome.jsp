@@ -14,7 +14,7 @@
 
     <!-- Custom Fonts -->
     <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-    
+    <script type="text/javascript" src="js/jquery-2.2.2.js"></script>
     <!-- style -->
     <link rel="stylesheet" type="text/css" href="css/style.css" />
 </head>
@@ -63,9 +63,9 @@
 		    				<input id="predictButton" type="button" class="btn btn-xs btn-success" value="预测处方" /> 
 						</p>
 			    		<hr>
-			    		<p class="text-danger">
+			    		<!-- <p class="text-danger">
 			    			机器学习阈值（0～1）：<input id="threshold" type="text" name="threshold" value="0.3" />
-			    		</p>
+			    		</p> -->
 			    		<hr>
 			    		<p>时间状态</p>
 			    		<table class="table table-bordered">
@@ -368,11 +368,6 @@
 			<h3>预测结果</h3>
 		</div>
 		<div id="result" align="left" >
-			<!-- <div id="statistics"></div>
-			<hr>
-			<div id="machinelearning"></div>
-			<hr>
-			<div id="rules"></div> -->
 			<hr>
 			<div id="compresensive"></div>
 			<hr>
@@ -380,137 +375,91 @@
 	
 	</div>
 	</div>
-	<!-- <img id="loading" src="img/progress.gif" /> Loading Image -->
+	
+	<script type="text/javascript" src="js/jquery-2.2.2.js"></script>
+	<script type="text/javascript">
+	function btn(){
+		var $btn = $("input.btn");//获取按钮元素
+		$btn.bind("click",function(){
+			$('#loading').show(); 
+			var zhengxingString = "";
+			var pulseString = "";
+			var bodydiscomfortString = "";
+			var tengtongString = "";
+			$($('input[name=zhengxing]:checked', '#myForm')).each(function(){
+				zhengxingString += this.value + ",";
+			});
+			$($('input[name=bodydiscomfort]:checked', '#myForm')).each(function(){
+				bodydiscomfortString += this.value + ",";
+			});
+			$($('input[name=tengtong]:checked', '#myForm')).each(function(){
+				tengtongString += this.value + ",";
+			});
+			$($('input[name=pulse]:checked', '#myForm')).each(function(){
+				pulseString += this.value + ",";
+			});
+			
+			$.ajax({
+                type:"post",
+                url:"predict",//需要用来处理ajax请求的action,excuteAjax为处理的方法名，JsonAction为action名
+                data:{//设置数据源
+                    batch:$('#batch').val(),
+                    //threshold:$('#threshold').val(),
+                    timestatus:$('#timestatus').val(),
+                    xu:$('#xu').val(),
+                    tanyu:$('input[name=tanyu]:checked', '#myForm').val(),
+                    tanshi:$('input[name=tanshi]:checked', '#myForm').val(),
+                    zhengxing:zhengxingString,
+                    sputumamount:$('#sputumamount').val(),
+                    sputumcolor:$('#sputumcolor').val(),
+                    cough:$('#cough').val(),
+                    pulse:pulseString,
+                    na:$('#na').val(),
+                    defecate:$('#defecate').val(),
+                    constipation:$('input[name=constipation]:checked', '#myForm').val(),
+                    urinate:$('#urinate').val(),
+                    xionglei:$('#xionglei').val(),
+                    futong:$('#futong').val(),
+                    tengtong:tengtongString,
+                    bodydiscomfort:bodydiscomfortString,
+                    tonguecolor:$('#tonguecolor').val(),
+                    coatedtongue:$('#coatedtongue').val(),
+                    energy:$('#energy').val(),
+                    sleep:$('#sleep').val(),
+                    hanre:$('#hanre').val(),
+                    sweat:$('#sweat').val(),
+                    thirst:$('#thirst').val(),
+                    taste:$('#taste').val()
+                },
+                dataType:"json",//设置需要返回的数据类型
+                success:function(data){
+                	$('#loading').hide(); 
+                   	// resut 
+                   	var jsonObject = jQuery.parseJSON(data);
+                   	var medicineList = ""; // comprehensive result
+                   	
+                   	// comprehensive result
+                   	$.each(jsonObject.medicineList, function(id, value){
+                   		medicineList += value + ",";
+                   	});
+                    $('#compresensive').html(medicineList);
+                     
+                },
+                error:function(){
+                    alert("系统异常，请稍后重试！");
+                }//这里不要加","
+            });
+		});
+	}
+	
+	/* 页面加载完成，绑定事件 */
+    $(document).ready(function(){
+    	$('#loading').hide(); 
+        btn();//点击提交，执行ajax
+    });
+	</script>
 	<div id="loading" style="position: fixed; top:0; left:0; width:100%; height: 100%; center center #efefef">
 		<img src="img/progress.gif" style="margin-top: 15%;margin-left: 15%;"/>
 	</div>
-	<script type="text/javascript" src="js/jquery-2.2.2.js"></script>
-	<script type="text/javascript">
-		function btn(){
-			var $btn = $("input.btn");//获取按钮元素
-			$btn.bind("click",function(){
-				$("#loading").show();
-				var zhengxingString = "";
-				var pulseString = "";
-				var bodydiscomfortString = "";
-				$($('input[name=zhengxing]:checked', '#myForm')).each(function(){
-					zhengxingString += this.value + ",";
-				});
-				$($('input[name=bodydiscomfort]:checked', '#myForm')).each(function(){
-					bodydiscomfortString += this.value + ",";
-				});
-				$($('input[name=pulse]:checked', '#myForm')).each(function(){
-					pulseString += this.value + ",";
-				});
-				
-				$.ajax({
-                    type:"post",
-                    url:"predict",//需要用来处理ajax请求的action,excuteAjax为处理的方法名，JsonAction为action名
-                    data:{//设置数据源
-                        batch:$('#batch').val(),
-                        threshold:$('#threshold').val(),
-                        timestatus:$('#timestatus').val(),
-                        xu:$('#xu').val(),
-                        tanyu:$('input[name=tanyu]:checked', '#myForm').val(),
-                        tanshi:$('input[name=tanshi]:checked', '#myForm').val(),
-                        zhengxing:zhengxingString,
-                        sputumamount:$('#sputumamount').val(),
-                        sputumcolor:$('#sputumcolor').val(),
-                        cough:$('#cough').val(),
-                        pulse:pulseString,
-                        na:$('#na').val(),
-                        defecate:$('#defecate').val(),
-                        constipation:$('input[name=constipation]:checked', '#myForm').val(),
-                        urinate:$('#urinate').val(),
-                        xonglei:$('#xonglei').val(),
-                        futong:$('#futong').val(),
-                        tengtong:$('input[name=tengtong]').val(),
-                        bodydiscomfort:bodydiscomfortString,
-                        tonguecolor:$('#tonguecolor').val(),
-                        coatedtongue:$('#coatedtongue').val(),
-                        energy:$('#energy').val(),
-                        sleep:$('#sleep').val(),
-                        hanre:$('#hanre').val(),
-                        sweat:$('#sweat').val(),
-                        thirst:$('#thirst').val(),
-                        taste:$('#taste').val()
-                    },
-                    dataType:"json",//设置需要返回的数据类型
-                    success:function(data){
-                    	$("#loading").hide(); // To Hide progress bar
-                    	/* var statisticsStr = "";
-                    	var machineStr = "";
-                    	var ruleStr = "";
-                    	var compresensiveStr = "";
-                    	
-                    	// parse json text
-                    	var jsonObject = JSON.parse(data, function(key, value){
-                    		if(key == "medicineListByStatistics"){
-                    			value.foreach(function(value){
-                    				statisticsStr += value + ",";
-                    			});
-                    		}
-							if(key == "medicineListByMachine"){
-								value.foreach(function(value){
-									machineStr += value + ",";
-                    			});
-                    		}
-							if(key == "medicineListByRules"){
-								value.foreach(function(value){
-									ruleStr += value + ",";
-                    			});
-                    		}
-							if(key == "medicineList"){
-								value.foreach(function(value){
-									compresensiveStr += value + ",";
-                    			});
-                    		}
-                    	});
-                       	$('#statistics').html(statisticsStr);
-                       	$('#machinelearning').html(machineStr);
-                       	$('#rules').html(ruleStr);
-                       	$('#compresensive').html(compresensiveStr); */
-                       	var jsonObject = jQuery.parseJSON( data );
-                       /* 	var statisticsStr = "";
-                    	var machineStr = "";
-                    	var ruleStr = ""; */
-                    	var compresensiveStr = "";
-                    	// statistics result
-                    	/* $.each(jsonObject.medicineListByStatistics, function(id, value){
-                    		statisticsStr += value + ",";
-                    	});
-                       	$('#statistics').html(statisticsStr);
-                    	
-                    	// machine learning result
-                    	$.each(jsonObject.medicineListByMachine, function(id, value){
-                    		machineStr += value + ",";
-                    	});
-                       	$('#machinelearning').html(machineStr);
-                    	
-                    	// rules learning result
-                    	$.each(jsonObject.medicineListByRules, function(id, value){
-                    		ruleStr += value + ",";
-                    	});
-                       	$('#rules').html(ruleStr); */
-                    	
-                    	// compresensive result
-                    	$.each(jsonObject.medicineList, function(id, value){
-                    		compresensiveStr += value + ",";
-                    	});
-                       	$('#compresensive').html(compresensiveStr);
-                    },
-                    error:function(){
-                        alert("系统异常，请稍后重试！");
-                    }//这里不要加","
-                });
-			});
-		}
-		
-		/* 页面加载完成，绑定事件 */
-        $(document).ready(function(){
-        	$('#loading').hide();
-            btn();//点击提交，执行ajax
-        });
-	</script>
 </body>
 </html>

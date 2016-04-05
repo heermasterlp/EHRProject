@@ -10,6 +10,8 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 
 import org.bson.Document;
+
+import com.mongodb.BasicDBObject;
 import com.mongodb.Block;
 import com.mongodb.MongoClient;
 import com.mongodb.client.FindIterable;
@@ -145,7 +147,7 @@ public class MedicineByDescription {
 			return null;
 		}
 		// 1.2 split the diagnose
-		String[] diagkeywords = diagnose.split(" ");
+		String[] diagkeywords = diagnose.split(",");
 		if(diagkeywords.length == 0 || diagkeywords == null){
 			return null; 
 		}
@@ -155,18 +157,7 @@ public class MedicineByDescription {
 		// 1.4 get the similar records based on the description info
 		List<EHealthRecord> similarRecords = DiagMedicineProcess.getEhealthRecordByDescription(description, classifiedRecords);
 				
-		// 1.5 remove the repeat records
-		Set<EHealthRecord> eSet = new HashSet<EHealthRecord>();
-				
-		if( similarRecords != null && similarRecords.size() > 0 ){
-			for( EHealthRecord e : similarRecords ){
-				eSet.add(e);
-			}
-		}
-		// 1.6 return the similar records
-		List<EHealthRecord> result = new ArrayList<EHealthRecord>();
-		result.addAll(eSet);
-		return result;
+		return similarRecords;
 	}
 	
 	
@@ -396,16 +387,30 @@ public class MedicineByDescription {
 	 */
 	public static List<EHealthRecord> getRecordsByBatch(String batch){
 		
-		if("".equals(batch)) return null;
-		List<EHealthRecord> eHealthRecordsByBatch = new ArrayList<EHealthRecord>();
-		// built the conditions structure of batch
-		List<EHealthRecord> allList = getAllRecords();
-		for (EHealthRecord eRecord : allList) {
-			if (eRecord.getBatchString().equals(batch.substring(0, 4))) {
-				eHealthRecordsByBatch.add(eRecord);
+		final List<EHealthRecord> eHealthRecords = new ArrayList<EHealthRecord>();
+		
+		MongoClient client = new MongoClient(DataBaseSetting.host,DataBaseSetting.port);
+		MongoDatabase db = client.getDatabase(DataBaseSetting.database);
+		MongoCollection<Document> ehealthRecordCollection = db.getCollection(DataBaseSetting.ehealthcollection);
+		
+		// List of ehealth record
+		FindIterable<Document> iterable = ehealthRecordCollection.find(new BasicDBObject("ehealthrecord.batch",batch));
+		
+		iterable.forEach(new Block<Document>() {
+
+			@Override
+			public void apply(Document document) {
+				// TODO Auto-generated method stub
+				EHealthRecord eHealthRecord = EhealthRecordConverter.toEHealthRecord(document);
+	        	
+	        	if(eHealthRecord != null){
+	        		eHealthRecords.add(eHealthRecord);
+	        	}
 			}
-		}
-		return eHealthRecordsByBatch;
+		});
+		
+		client.close();
+		return eHealthRecords;
 	}
 	
 	/**
